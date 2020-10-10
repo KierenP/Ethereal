@@ -145,7 +145,11 @@ void aspirationWindow(Thread *thread) {
     const int mainThread = thread->index == 0;
 
     int value, depth = thread->depth;
-    int alpha = -MATE, beta = MATE, delta = WindowSize;
+    int alpha = -MATE, beta = MATE,
+
+    delta = WindowSize + ((thread->index % 2 == 0) ? 1 : -1) * (int)(log2(thread->index + 1));
+    if (delta < 1)
+      delta = 1;
 
     // After a few depths use a previous result to form a window
     if (thread->depth >= WindowDepth) {
