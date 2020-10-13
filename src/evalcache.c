@@ -21,13 +21,32 @@
 #include "thread.h"
 #include "types.h"
 #include "zobrist.h"
+#include "bitboards.h"
+
+uint64_t simlifyZobristKey(Board *board) {
+    uint64_t key = board->hash;
+
+    //Remove the turn
+    if (board->turn)
+        key ^= ZobristTurnKey;
+
+    //Remove the castling rights
+    uint64_t castles = board->castleRooks;
+    while (castles)
+        key ^= ZobristCastleKeys[poplsb(&castles)];
+
+    //Remove the ep square
+    if (board->epSquare != -1)
+        key ^= ZobristEnpassKeys[fileOf(board->epSquare)];
+
+    return key;
+}
 
 int getCachedEvaluation(Thread *thread, Board *board, int *eval) {
-
     EvalEntry eve;
     uint64_t key1, key2;
 
-    key1 =  board->turn ? board->hash ^ ZobristTurnKey : board->hash;
+    key1 =  simlifyZobristKey(board);
     eve  =  thread->evtable[key1 & EVAL_CACHE_MASK];
     key2 = (eve & ~0xFFFF) | (key1 & 0xFFFF);
 
@@ -37,7 +56,7 @@ int getCachedEvaluation(Thread *thread, Board *board, int *eval) {
 }
 
 void storeCachedEvaluation(Thread *thread, Board *board, int eval) {
-    uint64_t key1 =  board->turn ? board->hash ^ ZobristTurnKey : board->hash;
+    uint64_t key1 =  simlifyZobristKey(board);
     thread->evtable[key1 & EVAL_CACHE_MASK] = (key1 & ~0xFFFF) | (uint16_t)((int16_t)eval);
 }
 
@@ -51,4 +70,3 @@ void storeCachedPawnKingEval(Thread *thread, Board *board, uint64_t passed, int 
     PKEntry *pke = &thread->pktable[board->pkhash & PK_CACHE_MASK];
     *pke = (PKEntry) {board->pkhash, passed, eval, safetyw, safetyb};
 }
-
