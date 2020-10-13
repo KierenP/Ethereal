@@ -23,7 +23,7 @@
 #include "zobrist.h"
 #include "bitboards.h"
 
-uint64_t simlifyZobristKey(Board *board) {
+uint64_t simplifyZobristKey(Board *board) {
     uint64_t key = board->hash;
 
     //Remove the turn
@@ -46,7 +46,7 @@ int getCachedEvaluation(Thread *thread, Board *board, int *eval) {
     EvalEntry eve;
     uint64_t key1, key2;
 
-    key1 =  simlifyZobristKey(board);
+    key1 =  simplifyZobristKey(board);
     eve  =  thread->evtable[key1 & EVAL_CACHE_MASK];
     key2 = (eve & ~0xFFFF) | (key1 & 0xFFFF);
 
@@ -56,7 +56,7 @@ int getCachedEvaluation(Thread *thread, Board *board, int *eval) {
 }
 
 void storeCachedEvaluation(Thread *thread, Board *board, int eval) {
-    uint64_t key1 =  simlifyZobristKey(board);
+    uint64_t key1 =  simplifyZobristKey(board);
     thread->evtable[key1 & EVAL_CACHE_MASK] = (key1 & ~0xFFFF) | (uint16_t)((int16_t)eval);
 }
 
